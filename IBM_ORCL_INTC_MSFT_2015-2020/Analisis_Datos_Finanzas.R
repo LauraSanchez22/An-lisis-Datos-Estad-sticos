@@ -1,3 +1,8 @@
+#Titulo: IBM_ORCL_INTC_MSFT_2015-2020
+#Archivo: Analisis_Datos_Finanzas.R
+#Author: Laura Lizbeth Sanchez Ramirez
+
+
 library(dygraphs)
 library(xts)
 library(quantmod)
