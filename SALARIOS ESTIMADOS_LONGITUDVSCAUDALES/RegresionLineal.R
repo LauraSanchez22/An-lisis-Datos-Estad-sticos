@@ -1,3 +1,7 @@
+#Titulo: Salarios Estimados; Longitud vs Caudales
+#Archivo: RegresionLineal.R
+#Author: Laura Lizbeth Sanchez Ramirez
+
 #Revisión de los datasets disponibles en la biblioteca de R
 library(datasets)
 
