@@ -1,0 +1,344 @@
+---
+title: "EXP_HW_ARIMA"
+author: "Laura Lizbeth Sanchez Ramirez"
+output: pdf_document
+date: "2026-10-27"
+---
+
+```{r, message=FALSE}
+AMZN <- getSymbols("AMZN", from="2020-08-01", to="2021-03-31", src="yahoo", auto.assign = FALSE)
+#Se eliminan valores faltantes
+AMZN <- na.omit(AMZN)
+#Se mantiene la columna 4: Precios Cierre
+AMZN <- AMZN[,4]
+plot(AMZN, ylab="Precios")
+
+length(AMZN)
+```
+
+## Total de elementos a analizar
+[1] 166
+
+```{r, message=FALSE}
+#Se utiliza el 7% para los datos de prueba
+h <- round(length(AMZN)*0.07, digits = 0)
+h
+```
+
+## Cantidad de datos de prueba
+
+[1] 12
+
+```{r, message=FALSE}
+train <- AMZN[1:(nrow(AMZN) - h),]
+test <- AMZN[(nrow(AMZN) - h + 1):nrow(AMZN),]
+
+##### MODELO ARIMA ####
+dftrain <- diff(train)[-1,]
+adfTest(dftrain) #Se obtiene un valor de P VALUE: 0.01
+```
+
+## Datos obtenidos
+
+Title:
+ Augmented Dickey-Fuller Test
+
+Test Results:
+  PARAMETER:
+    Lag Order: 1
+  STATISTIC:
+    Dickey-Fuller: -9.1947
+  P VALUE:
+    0.01 
+
+```{r, message=FALSE}
+adf.test(dftrain)
+```
+ 
+## Datos Estacionarios (dftrain)
+
+Augmented Dickey-Fuller Test
+
+data:  dftrain
+Dickey-Fuller = -6.2722, Lag order = 5,
+p-value = 0.01
+alternative hypothesis: stationary
+
+```{r, message=FALSE}
+#Graficación de ambos resultados
+par(mfrow=c(2,1))
+plot(train, col="red")
+plot(dftrain, col="blue")
+
+#Se definen candidatos del modelo ARMA
+m <- eacf(dftrain,15,10)
+```
+
+## Modelo ARMA
+AR/MA
+   0 1 2 3 4 5 6 7 8 9 10
+0  o o x o o o o o o o o 
+1  x o x o o o o o o o o 
+2  x o x o o o o o o o o 
+3  o x x o o o o o o o o 
+4  o x x x o o o o o o o 
+5  x x x x o o o o o o o 
+6  x x x x o o o o o o o 
+7  o o x o o o x o o o o 
+8  o x x x o o x o o o o 
+9  x o x o o o x o x o o 
+10 x o o x o o o o o x o 
+11 x x o x o o o x o x o 
+12 x o x x x x o o o x x 
+13 x o x o o x o o o o o 
+14 x x o o o x o o o o o 
+15 x x o o o x o o o o o 
+
+```{r, message=FALSE}
+m2<- auto.arima(train, seasonal = TRUE)
+
+summary(m2)
+```
+
+## Series: train 
+
+ARIMA(1,0,0) with non-zero mean 
+
+Coefficients:
+         ar1      mean
+      0.8278  159.5200
+s.e.  0.0445    1.4092
+
+sigma^2 = 9.732:  log likelihood = -393.29
+AIC=792.58   AICc=792.74   BIC=801.7
+
+Training set error measures:
+                     ME     RMSE      MAE
+Training set 0.03227407 3.099232 2.368926
+                     MPE    MAPE      MASE
+Training set -0.01757944 1.48297 0.9658906
+                  ACF1
+Training set 0.0433558
+
+```{r, message=FALSE}
+#Modelación de datos
+modl<-Arima(train, order=c(7,1,3), method= "ML")
+
+summary(modl)
+```
+
+## Series: train 
+
+ARIMA(7,1,3) 
+
+Coefficients:
+         ar1     ar2      ar3     ar4     ar5
+      0.6061  0.3698  -0.8296  0.1582  0.0053
+s.e.  0.1697  0.2009   0.1866  0.1197  0.1013
+          ar6     ar7      ma1      ma2     ma3
+      -0.2080  0.1755  -0.6773  -0.3920  0.6974
+s.e.   0.1013  0.0903   0.1598   0.1989  0.1767
+
+sigma^2 = 10.07:  log likelihood = -389
+AIC=800.01   AICc=801.88   BIC=833.34
+
+Training set error measures:
+                       ME     RMSE      MAE
+Training set -0.004835271 3.058128 2.376444
+                     MPE     MAPE      MASE
+Training set -0.02373682 1.486665 0.9689559
+                   ACF1
+Training set 0.01040924
+
+```{r, message=FALSE}
+coeftest(modl)
+```
+
+## z test of coefficients
+
+Estimate Std. Error z value  Pr(>|z|)    
+ar1  0.6061038  0.1696959  3.5717 0.0003547 ***
+ar2  0.3698260  0.2009087  1.8408 0.0656559 .  
+ar3 -0.8296184  0.1865890 -4.4462 8.739e-06 ***
+ar4  0.1582018  0.1197207  1.3214 0.1863598    
+ar5  0.0053148  0.1012788  0.0525 0.9581484    
+ar6 -0.2079623  0.1013050 -2.0528 0.0400887 *  
+ar7  0.1755336  0.0903121  1.9436 0.0519397 .  
+ma1 -0.6773036  0.1598033 -4.2384 2.252e-05 ***
+ma2 -0.3920258  0.1989171 -1.9708 0.0487467 *  
+ma3  0.6973580  0.1766778  3.9471 7.912e-05 ***
+---
+Signif. codes:  
+0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+```{r, message=FALSE}
+tsdiag(modl)
+
+mod2 <- Arima(train, order=c(1,0,0), method = "ML")
+mod2
+```
+
+## Series: train 
+
+ARIMA(1,0,0) with non-zero mean 
+
+Coefficients:
+         ar1      mean
+      0.8277  159.5193
+s.e.  0.0445    1.4089
+
+sigma^2 = 9.732:  log likelihood = -393.29
+AIC=792.58   AICc=792.74   BIC=801.7
+
+```{r, message=FALSE}
+coeftest(mod2)
+```
+
+## z test of coefficients
+
+Estimate Std. Error z value
+ar1         0.82773    0.04447  18.613
+intercept 159.51927    1.40891 113.222
+           Pr(>|z|)    
+ar1       < 2.2e-16 ***
+intercept < 2.2e-16 ***
+---
+Signif. codes:  
+0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+```{r, message=FALSE}
+#Modelos pronóstico para mod1 y mod2
+Pron_m1 <- forecast(modl,h)
+Pron_m2 <- forecast(mod2,h)
+
+summary(Pron_m1)
+```
+
+## Forecast method: ARIMA(7,1,3)
+
+Coefficients:
+         ar1     ar2      ar3     ar4     ar5
+      0.6061  0.3698  -0.8296  0.1582  0.0053
+s.e.  0.1697  0.2009   0.1866  0.1197  0.1013
+          ar6     ar7      ma1      ma2     ma3
+      -0.2080  0.1755  -0.6773  -0.3920  0.6974
+s.e.   0.1013  0.0903   0.1598   0.1989  0.1767
+
+sigma^2 = 10.07:  log likelihood = -389
+AIC=800.01   AICc=801.88   BIC=833.34
+
+Error measures:
+                       ME     RMSE      MAE
+Training set -0.004835271 3.058128 2.376444
+                     MPE     MAPE      MASE
+Training set -0.02373682 1.486665 0.9689559
+                   ACF1
+Training set 0.01040924
+
+Forecasts:
+    Point Forecast    Lo 80    Hi 80    Lo 95
+155       154.6948 150.6277 158.7619 148.4747
+156       154.2918 148.7411 159.8426 145.8027
+157       154.0236 147.4552 160.5919 143.9782
+158       154.3809 147.2772 161.4847 143.5167
+159       154.2336 146.5214 161.9457 142.4388
+160       155.1780 146.8734 163.4827 142.4772
+161       155.0976 146.2620 163.9332 141.5847
+162       155.6980 146.2285 165.1674 141.2157
+163       155.2122 145.0811 165.3433 139.7181
+164       155.2338 144.3229 166.1446 138.5470
+165       154.6548 143.0814 166.2281 136.9548
+166       154.5871 142.3916 166.7826 135.9357
+       Hi 95
+155 160.9149
+156 162.7810
+157 164.0690
+158 165.2452
+159 166.0283
+160 167.8789
+161 168.6105
+162 170.1803
+163 170.7063
+164 171.9205
+165 172.3547
+166 173.2385
+
+```{r, message=FALSE}
+summary(Pron_m2)
+```
+
+
+## Forecast method: ARIMA(1,0,0)
+
+Coefficients:
+         ar1      mean
+      0.8277  159.5193
+s.e.  0.0445    1.4089
+
+sigma^2 = 9.732:  log likelihood = -393.29
+AIC=792.58   AICc=792.74   BIC=801.7
+
+Error measures:
+                     ME     RMSE      MAE         MPE     MAPE      MASE       ACF1
+Training set 0.03240732 3.099235 2.368948 -0.01750034 1.482982 0.9658995 0.04339856
+
+Forecasts:
+    Point Forecast    Lo 80    Hi 80    Lo 95    Hi 95
+155       155.3436 151.3457 159.3414 149.2294 161.4578
+156       156.0629 150.8732 161.2527 148.1259 164.0000
+157       156.6584 150.7901 162.5266 147.6837 165.6330
+158       157.1512 150.8602 163.4422 147.5300 166.7724
+159       157.5592 150.9942 164.1241 147.5190 167.5993
+160       157.8968 151.1507 164.6430 147.5794 168.2142
+161       158.1763 151.3087 165.0439 147.6732 168.6794
+162       158.4077 151.4581 165.3573 147.7792 169.0362
+163       158.5992 151.5940 165.6044 147.8857 169.3127
+164       158.7577 151.7146 165.8007 147.9863 169.5291
+165       158.8889 151.8200 165.9577 148.0780 169.6998
+166       158.9975 151.9110 166.0840 148.1596 169.8353
+
+```{r, message=FALSE}
+#Gráficos
+par(mfrow=c(2,1))
+plot(Pron_m1, include = 50)
+plot(Pron_m2, include = 50)
+
+#Gráfico de Datos de entrenamiento
+traints<-ts(train,start = c(2020,08,01), frequency = 154)
+fitted1<-ts(modl$fitted, start = c(2020,08,01), frequency = 154)
+fitted2<-ts(mod2$fitted, start = c(2020,08,01), frequency = 154)
+pron1<-ts(Pron_m1$mean, start = c(2021,08), frequency = 154)
+pron2<-ts(Pron_m2$mean, start = c(2021,08), frequency = 154)
+
+autoplot(traints)+
+  autolayer(fitted1, series="ARIMA (7,1,3)")+
+  autolayer(fitted2, series="ARIMA (1,0,0)")+
+  autolayer(pron1, series = "PRON ARIMA (7,1,3)")+
+  autolayer(pron2, series = "PRON ARIMA (1,0,0)")
+
+
+#Medición del error pronóstico, RMSE y MAPE
+RMSE_arima<-rmse(test, Pron_m1$mean)
+RMSEar1<-rmse(test, Pron_m2$mean)
+
+MAPE_arima<-mape(test, Pron_m1$mean)
+MAPE_ar1<-mape(test, Pron_m2$mean)
+
+#Se imprimen los resultados en una tabla
+Modelo<-c("ARIMA(7,1,3)", "AR(3)")
+
+RMSE<-c(RMSE_arima, RMSEar1)
+MAPE<-c(MAPE_arima, MAPE_ar1)
+res<-data.frame(Modelo,RMSE,MAPE)
+
+print((res))
+```
+
+## Resultados 
+
+Modelo     RMSE       MAPE
+1 ARIMA(7,1,3) 1.864862 0.01021963
+2        AR(3) 4.255758 0.02388018
+
