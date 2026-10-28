@@ -1,0 +1,483 @@
+---
+title: "Polinomial_SVR"
+author: "Laura Lizbeth Sanchez Ramirez"
+output: pdf_document
+date: "2026-10-28"
+---
+
+```{r, message=FALSE}
+source("Lib_Preprocess.R")
+
+set.seed(1991)
+options(scipen = 999)
+
+
+### PREPROCESAMIENTO ###
+
+
+df.Position <- read.csv(
+  "Position_Salaries.csv",
+  header = TRUE,
+  stringsAsFactors = TRUE
+)
+
+df.Position$Position <- NULL
+
+summary(df.Position)
+```
+
+## Summary
+
+Level           Salary       
+ Min.   : 1.00   Min.   :  45000  
+ 1st Qu.: 3.25   1st Qu.:  65000  
+ Median : 5.50   Median : 130000  
+ Mean   : 5.50   Mean   : 249500  
+ 3rd Qu.: 7.75   3rd Qu.: 275000  
+ Max.   :10.00   Max.   :1000000
+ 
+```{r, message=FALSE}
+plot(df.Position)
+
+### MODELO LINEAL ###
+
+
+mdl.lineal.Position <- lm(
+  formula = Salary ~ Level,
+  data = df.Position
+)
+
+summary(mdl.lineal.Position)
+```
+ 
+## Residuals
+
+in      1Q  Median      3Q     Max 
+-170818 -129720  -40379   65856  386545 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)   
+(Intercept)  -195333     124790  -1.565  0.15615   
+Level          80879      20112   4.021  0.00383 **
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 182700 on 8 degrees of freedom
+Multiple R-squared:  0.669,	Adjusted R-squared:  0.6277 
+F-statistic: 16.17 on 1 and 8 DF,  p-value: 0.003833
+
+```{r, message=FALSE}
+plt.Position.g1 <- geom_line(
++   aes(
++     x = df.Position$Level,
++     y = predict(
++       mdl.lineal.Position,
++       newdata = df.Position
++     )
++   ),
++   colour = "tomato",
++   linewidth = 1
++ )
+> mdl.poly2.Position <- lm(
++   formula = Salary ~ poly(Level, 2),
++   data = df.Position
++ )
+> summary(mdl.poly2.Position)
+
+```
+
+## lm(formula = Salary ~ poly(Level, 2), data = df.Position)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-112833  -68852   10682   55186  153364 
+
+Coefficients:
+                Estimate Std. Error t value Pr(>|t|)    
+(Intercept)       249500      31073   8.029 0.000089 ***
+poly(Level, 2)1   734618      98262   7.476  0.00014 ***
+poly(Level, 2)2   446509      98262   4.544  0.00265 ** 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 98260 on 7 degrees of freedom
+Multiple R-squared:  0.9162,	Adjusted R-squared:  0.8923 
+F-statistic: 38.27 on 2 and 7 DF,  p-value: 0.0001703
+
+```{r, message=FALSE}
+plt.Position.g2 <- geom_line(
+  aes(
+    x = df.Position$Level,
+    y = predict(
+      mdl.poly2.Position,
+      newdata = df.Position
+    )
+  ),
+  colour = "blue",
+  linewidth = 1
+)
+
+### GRADO 3 ##
+
+
+mdl.poly3.Position <- lm(
+  formula = Salary ~ poly(Level, 3),
+  data = df.Position
+)
+
+summary(mdl.poly3.Position)
+
+```
+
+## lm(formula = Salary ~ poly(Level, 3), data = df.Position)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-75695 -28148   7091  29256  49538 
+
+Coefficients:
+                Estimate Std. Error t value   Pr(>|t|)    
+(Intercept)       249500      15894  15.698 0.00000423 ***
+poly(Level, 3)1   734618      50260  14.616 0.00000644 ***
+poly(Level, 3)2   446509      50260   8.884   0.000113 ***
+poly(Level, 3)3   228980      50260   4.556   0.003868 ** 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 50260 on 6 degrees of freedom
+Multiple R-squared:  0.9812,	Adjusted R-squared:  0.9718 
+F-statistic: 104.4 on 3 and 6 DF,  p-value: 0.00001441
+
+```{r, message=FALSE}
+plt.Position.g3 <- geom_line(
++   aes(
++     x = df.Position$Level,
++     y = predict(
++       mdl.poly3.Position,
++       newdata = df.Position
++     )
++   ),
++   colour = "green",
++   linewidth = 1
++ )
+> summary(mdl.poly4.Position)
+```
+
+## lm(formula = Salary ~ poly(Level, 4), data = df.Position)
+
+Residuals:
+     1      2      3      4      5      6      7      8      9     10 
+ -8357  18240   1358 -14633 -11725   6725  15997  10006 -28695  11084 
+
+Coefficients:
+                Estimate Std. Error t value    Pr(>|t|)    
+(Intercept)       249500       6486   38.47 0.000000224 ***
+poly(Level, 4)1   734618      20511   35.82 0.000000319 ***
+poly(Level, 4)2   446509      20511   21.77 0.000003796 ***
+poly(Level, 4)3   228980      20511   11.16    0.000101 ***
+poly(Level, 4)4   114251      20511    5.57    0.002568 ** 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 20510 on 5 degrees of freedom
+Multiple R-squared:  0.9974,	Adjusted R-squared:  0.9953 
+F-statistic: 478.1 on 4 and 5 DF,  p-value: 0.000001213
+
+
+```{r, message=FALSE}
+plt.Position.g4 <- geom_line(
++   aes(
++     x = df.Position$Level,
++     y = predict(
++       mdl.poly4.Position,
++       newdata = df.Position
++     )
++   ),
++   colour = "yellow",
++   linewidth = 1
++ )
+> mdl.poly5.Position <- lm(
++   formula = Salary ~ poly(Level, 5),
++   data = df.Position
++ )
+> summary(mdl.poly5.Position)
+```
+
+## lm(formula = Salary ~ poly(Level, 5), data = df.Position)
+
+Residuals:
+    1     2     3     4     5     6     7     8     9    10 
+ 1105 -3837  2935  2713 -2263 -2737 -1350  8429 -6618  1622 
+
+Coefficients:
+                Estimate Std. Error t value     Pr(>|t|)    
+(Intercept)       249500       2024 123.286 0.0000000260 ***
+poly(Level, 5)1   734618       6400 114.790 0.0000000345 ***
+poly(Level, 5)2   446509       6400  69.771 0.0000002529 ***
+poly(Level, 5)3   228980       6400  35.780 0.0000036419 ***
+poly(Level, 5)4   114251       6400  17.853 0.0000578519 ***
+poly(Level, 5)5    44041       6400   6.882      0.00234 ** 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 6400 on 4 degrees of freedom
+Multiple R-squared:  0.9998,	Adjusted R-squared:  0.9995 
+F-statistic:  3938 on 5 and 4 DF,  p-value: 0.0000001804
+
+```{r, message=FALSE}
+plt.Position.g5 <- geom_line(
++   aes(
++     x = df.Position$Level,
++     y = predict(
++       mdl.poly5.Position,
++       newdata = df.Position
++     )
++   ),
++   colour = "orange",
++   linewidth = 1
++ )
+> plt.Position <- ggplot() +
++   theme_light() +
++   geom_point(
++     aes(
++       x = df.Position$Level,
++       y = df.Position$Salary
++     )
++   ) +
++   xlab("Nivel de puesto") +
++   ylab("Salario")
+> plt.G1 <- plt.Position + plt.Position.g1 + ggtitle("Grado 1")
+> plt.G2 <- plt.Position + plt.Position.g2 + ggtitle("Grado 2")
+> plt.G3 <- plt.Position + plt.Position.g3 + ggtitle("Grado 3")
+> plt.G4 <- plt.Position + plt.Position.g4 + ggtitle("Grado 4")
+> plt.G5 <- plt.Position + plt.Position.g5 + ggtitle("Grado 5")
+> plt.grid <- plot_grid(
++   plt.G1,
++   plt.G2,
++   plt.G3,
++   plt.G4,
++   plt.G5,
++   ncol = 2
++ )
+> ggsave(
++   filename = "Polinomial_lin.jpg",
++   plot = plt.grid,
++   units = "in",
++   height = 7,
++   width = 14
++ )
+> mdl.raro.Position <- lm(
++   formula = Salary ~ Level +
++     I(Level^2) +
++     I(Level^4),
++   data = df.Position
++ )
+> summary(mdl.raro.Position)
+```
+
+## lm(formula = Salary ~ Level + I(Level^2) + I(Level^4), data = df.Position)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-63986 -18617   2166  25477  37972 
+
+Coefficients:
+             Estimate Std. Error t value Pr(>|t|)   
+(Intercept) -68891.92   70790.67  -0.973  0.36805   
+Level       107718.34   45975.34   2.343  0.05761 . 
+I(Level^2)  -19945.18    6992.06  -2.853  0.02908 * 
+I(Level^4)     194.94      33.46   5.826  0.00113 **
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 41140 on 6 degrees of freedom
+Multiple R-squared:  0.9874,	Adjusted R-squared:  0.9811 
+F-statistic: 156.9 on 3 and 6 DF,  p-value: 0.000004342
+
+```{r, message=FALSE}
+# REGRESION CON VECTORES DE SOPORTE
+
+svr.lin <- svm(
+  formula = Salary ~ .,
+  data = df.Position,
+  kernel = "linear",
+  type = "eps-regression"
+)
+
+summary(svr.lin)
+
+
+```
+
+## svm(formula = Salary ~ ., data = df.Position, kernel = "linear", type = "eps-regression")
+
+Parameters:
+   SVM-Type:  eps-regression 
+ SVM-Kernel:  linear 
+       cost:  1 
+      gamma:  1 
+    epsilon:  0.1 
+
+
+Number of Support Vectors:  8
+
+```{r, message=FALSE}
+svr.poly <- svm(
+  formula = Salary ~ .,
+  data = df.Position,
+  kernel = "polynomial",
+  type = "eps-regression"
+)
+
+summary(svr.poly)
+```
+
+## svm(formula = Salary ~ ., data = df.Position, kernel = "polynomial", type = "eps-regression")
+Parameters:
+   SVM-Type:  eps-regression 
+ SVM-Kernel:  polynomial 
+       cost:  1 
+     degree:  3 
+      gamma:  1 
+     coef.0:  0 
+    epsilon:  0.1 
+
+
+Number of Support Vectors:  8
+
+```{r, message=FALSE}
+svr.rad <- svm(
+  formula = Salary ~ .,
+  data = df.Position,
+  kernel = "radial",
+  type = "eps-regression"
+)
+
+summary(svr.rad)
+```
+
+## svm(formula = Salary ~ ., data = df.Position, kernel = "radial", type = "eps-regression")
+
+Parameters:
+   SVM-Type:  eps-regression 
+ SVM-Kernel:  radial 
+       cost:  1 
+      gamma:  1 
+    epsilon:  0.1 
+
+
+Number of Support Vectors:  6
+
+```{r, message=FALSE}
+svr.sig <- svm(
+  formula = Salary ~ .,
+  data = df.Position,
+  kernel = "sigmoid",
+  type = "eps-regression"
+)
+
+summary(svr.sig)
+```
+
+## svm(formula = Salary ~ ., data = df.Position, kernel = "sigmoid", type = "eps-regression")
+
+Parameters:
+   SVM-Type:  eps-regression 
+ SVM-Kernel:  sigmoid 
+       cost:  1 
+      gamma:  1 
+     coef.0:  0 
+    epsilon:  0.1 
+
+
+Number of Support Vectors:  9
+
+```{r, message=FALSE}
+### COMPARACIÓN SVR ###
+
+plt.svr <- ggplot() +
+  theme_light() +
+  geom_point(
+    aes(
+      x = df.Position$Level,
+      y = df.Position$Salary
+    )
+  ) +
+  xlab("Nivel de puesto") +
+  ylab("Salario") +
+  
+  geom_line(
+    aes(
+      x = df.Position$Level,
+      y = predict(svr.lin, df.Position)
+    ),
+    colour = "dodgerblue",
+    linewidth = 1.5
+  ) +
+  
+  geom_line(
+    aes(
+      x = df.Position$Level,
+      y = predict(svr.poly, df.Position)
+    ),
+    colour = "green",
+    linewidth = 1.5
+  ) +
+  
+  geom_line(
+    aes(
+      x = df.Position$Level,
+      y = predict(svr.rad, df.Position)
+    ),
+    colour = "orange",
+    linewidth = 1.5
+  ) +
+  
+  geom_line(
+    aes(
+      x = df.Position$Level,
+      y = predict(svr.sig, df.Position)
+    ),
+    colour = "deeppink3",
+    linewidth = 1.5
+  )
+
+plt.svr
+
+### R² Y R² AJUSTADO ###
+
+Y.pred <- predict(
+  svr.rad,
+  newdata = df.Position
+)
+
+Y.mean <- mean(df.Position$Salary)
+
+SSt <- sum(
+  (df.Position$Salary - Y.mean)^2
+)
+
+SSr <- sum(
+  (df.Position$Salary - Y.pred)^2
+)
+
+R.squared <- 1 - (SSr / SSt)
+
+n <- nrow(df.Position)
+p <- ncol(df.Position) - 1
+
+Adj.R.squared <- 1 -
+  (1 - R.squared) *
+  ((n - 1) / (n - p - 1))
+
+R.squared
+Adj.R.squared
+
+```
+
+## Resultados
+
+R.squared
+[1] 0.7485194
+Adj.R.squared
+[1] 0.7170843
