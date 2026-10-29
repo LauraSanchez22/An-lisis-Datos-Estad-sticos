@@ -342,3 +342,222 @@ Modelo     RMSE       MAPE
 1 ARIMA(7,1,3) 1.864862 0.01021963
 2        AR(3) 4.255758 0.02388018
 
+
+```{r, message=FALSE}
+#########SUAVIZAMIENTO EXPONENCIAL##############
+#Se obtienen datos
+AMZN <- getSymbols("AMZN", from="2020-08-01", to="2021-03-31", src="yahoo", auto.assign = FALSE)
+#Se eliminan valores faltantes
+AMZN <- na.omit(AMZN)
+#Se mantiene la columna 4: Precios Cierre
+AMZN <- AMZN[,4]
+plot(AMZN, ylab="Precios")
+
+length(AMZN)
+
+#Se utiliza el 7% para los datos de prueba
+h <- round(length(AMZN)*0.07, digits = 0)
+h
+
+train <- AMZN[1:(nrow(AMZN) - h),]
+test <- AMZN[(nrow(AMZN) - h + 1):nrow(AMZN),]
+
+plot(train, col="red")
+
+traints<-ts(train, start=c(2020,08,01), frequency = 154)
+plot(traints)
+
+#Metodos de suavizamiento, primero modelo
+fit1<-ses(traints, h=12)
+summary(fit1)
+```
+
+## Forecast method: Simple exponential smoothing
+Model Information:
+Simple exponential smoothing 
+
+Call:
+ses(y = traints, h = 12)
+
+  Smoothing parameters:
+    alpha = 0.957 
+
+  Initial states:
+    l = 155.6599 
+
+  sigma:  3.2519
+
+     AIC     AICc      BIC 
+1142.880 1143.040 1151.991 
+
+Error measures:
+                       ME     RMSE      MAE         MPE     MAPE MASE        ACF1
+Training set -0.007726588 3.230677 2.428437 -0.02633296 1.520535  NaN 0.002370806
+
+Forecasts:
+         Point Forecast    Lo 80    Hi 80    Lo 95    Hi 95
+2021.045       154.5211 150.3537 158.6886 148.1476 160.8947
+2021.052       154.5211 148.7528 160.2895 145.6992 163.3430
+2021.058       154.5211 147.5083 161.5340 143.7959 165.2463
+2021.065       154.5211 146.4536 162.5887 142.1828 166.8594
+2021.071       154.5211 145.5216 163.5207 140.7575 168.2848
+2021.078       154.5211 144.6775 164.3648 139.4665 169.5758
+2021.084       154.5211 143.9002 165.1421 138.2778 170.7645
+2021.091       154.5211 143.1761 165.8662 137.1704 171.8719
+2021.097       154.5211 142.4955 166.5468 136.1295 172.9128
+2021.104       154.5211 141.8514 167.1909 135.1444 173.8979
+2021.110       154.5211 141.2385 167.8038 134.2071 174.8352
+2021.117       154.5211 140.6526 168.3896 133.3111 175.7312
+
+
+```{r, message=FALSE}
+ffit1<-forecast(fit1, h=12)
+autoplot(fit1) + autolayer(fitted(fit1))
+
+#Segundo Modelo: Tendencia Lineal Holt
+fit2<-holt(traints, h=12)
+summary(fit2)
+```
+
+## Forecast method: Holt's method
+
+holt(y = traints, h = 12)
+
+  Smoothing parameters:
+    alpha = 0.9561 
+    beta  = 0.0001 
+
+  Initial states:
+    l = 157.5703 
+    b = -0.0235 
+
+  sigma:  3.2773
+
+     AIC     AICc      BIC 
+1147.240 1147.646 1162.425 
+
+Error measures:
+                      ME     RMSE      MAE        MPE
+Training set 0.003454649 3.234459 2.440885 -0.0195426
+                 MAPE MASE        ACF1
+Training set 1.528386  NaN 0.001579586
+
+Forecasts:
+         Point Forecast    Lo 80    Hi 80    Lo 95
+2021.045       154.4975 150.2975 158.6975 148.0741
+2021.052       154.4740 148.6630 160.2851 145.5868
+2021.058       154.4506 147.3866 161.5145 143.6472
+2021.065       154.4271 146.3010 162.5532 141.9993
+2021.071       154.4036 145.3388 163.4685 140.5401
+2021.078       154.3801 144.4649 164.2954 139.2160
+2021.084       154.3567 143.6582 165.0551 137.9948
+2021.091       154.3332 142.9049 165.7615 136.8552
+2021.097       154.3097 142.1954 166.4240 135.7825
+2021.104       154.2863 141.5226 167.0499 134.7659
+2021.110       154.2628 140.8811 167.6445 133.7973
+2021.117       154.2393 140.2668 168.2118 132.8702
+            Hi 95
+2021.045 160.9209
+2021.052 163.3612
+2021.058 165.2539
+2021.065 166.8549
+2021.071 168.2671
+2021.078 169.5443
+2021.084 170.7186
+2021.091 171.8112
+2021.097 172.8370
+2021.104 173.8066
+2021.110 174.7283
+2021.117 175.6084
+
+```{r, message=FALSE}
+ffit2<-forecast(fit2, h=12)
+autoplot(fit2) + autolayer(fitted(fit2))
+#Tercer Modelo: Holt Winters (sin estacioanlidad)
+fit3<-HoltWinters(traints, alpha = NULL, beta = NULL, gamma= FALSE)
+fit3
+```
+
+## Holt-Winters exponential smoothing with trend and without seasonal component.
+
+Smoothing parameters:
+ alpha: 0.9762485
+ beta : 0.02682288
+ gamma: FALSE
+
+Coefficients:
+         [,1]
+a 154.4997463
+b  -0.1000008
+
+```{r, message=FALSE}
+ffit3<-forecast(fit3, h=12)
+autoplot(traints) + autolayer(ffit3)
+
+#Cuarto Modelo: Funcion ETS()
+fit4<-ets(train, model="ZZZ", damped = FALSE, alpha = NULL, beta = NULL, 
+          gamma=NULL, phi = NULL, lambda = FALSE, biasadj = FALSE,
+          additive.only = FALSE, restrict = TRUE, allow.multiplicative.trend = FALSE)
+summary(fit4)
+```
+
+## ETS(A,N,N) 
+
+Box-Cox transformation: lambda= 0 
+
+  Smoothing parameters:
+    alpha = 0.9484 
+
+  Initial states:
+    l = 5.0477 
+
+  sigma:  0.0204
+
+      AIC      AICc       BIC 
+-419.5687 -419.4087 -410.4578 
+
+Training set error measures:
+                       ME     RMSE      MAE
+Training set -0.006124262 3.230659 2.427199
+                     MPE     MAPE      MASE
+Training set -0.02550254 1.519672 0.9896505
+                   ACF1
+Training set 0.01041057
+
+```{r, message=FALSE}
+ffit4<-forecast(fit4, h=12)
+autoplot(forecast(fit4, h=12), include = 50)
+
+##Métrica desempeño pronóstico##
+RMSEses<-rmse(test, ffit1$mean)
+RMSEholt<-rmse(test, ffit2$mean)
+RMSEhw<-rmse(test,ffit3$mean)
+RMSEets<-rmse(test, ffit4$mean)
+
+MAPEses<-mape(test, ffit1$mean)
+MAPEholt<-mape(test, ffit2$mean)
+MAPEhw<-mape(test, ffit3$mean)
+MAPEets<-mape(test, ffit4$mean)
+
+#Se impreme las resultados obtenidos en la métrica de desempeño
+Modelo<-c("ARIMA(7,1,3)", "AR(3)", "ses", "holt", "Hw", "ets")
+
+RMSE<-c(RMSE_arima, RMSEar1, RMSEses, RMSEholt, RMSEhw, RMSEets)
+
+MAPE<-c(MAPE_arima, MAPE_ar1, MAPEses, MAPEholt, MAPEhw, MAPEets)
+
+res<-data.frame(Modelo,RMSE,MAPE)
+
+print((res))
+
+```
+
+##Tabla de Resultados
+
+Modelo     RMSE        MAPE
+1 ARIMA(7,1,3) 1.864862 0.010219634
+2        AR(3) 4.255758 0.023880178
+3          ses 1.694866 0.009117849
+4         holt 1.637093 0.008598195
+5           Hw 1.573658 0.007889717
+6          ets 1.696956 0.009135142

@@ -4,6 +4,8 @@
 
 install.packages("fpp2")
 library(fpp3)
+install.packages("psych")
+library(psych)
 install.packages("PerfomanceAnalytics")
 library(xts)
 install.packages(c("quantmod", "xts", "zoo", "TTR"))
@@ -103,6 +105,82 @@ Modelo<-c("ARIMA(7,1,3)", "AR(3)")
 
 RMSE<-c(RMSE_arima, RMSEar1)
 MAPE<-c(MAPE_arima, MAPE_ar1)
+res<-data.frame(Modelo,RMSE,MAPE)
+
+print((res))
+
+
+#########SUAVIZAMIENTO EXPONENCIAL##############
+#Se obtienen datos
+AMZN <- getSymbols("AMZN", from="2020-08-01", to="2021-03-31", src="yahoo", auto.assign = FALSE)
+#Se eliminan valores faltantes
+AMZN <- na.omit(AMZN)
+#Se mantiene la columna 4: Precios Cierre
+AMZN <- AMZN[,4]
+plot(AMZN, ylab="Precios")
+
+length(AMZN)
+
+#Se utiliza el 7% para los datos de prueba
+h <- round(length(AMZN)*0.07, digits = 0)
+h
+
+train <- AMZN[1:(nrow(AMZN) - h),]
+test <- AMZN[(nrow(AMZN) - h + 1):nrow(AMZN),]
+
+plot(train, col="red")
+
+traints<-ts(train, start=c(2020,08,01), frequency = 154)
+plot(traints)
+
+#Metodos de suavizamiento, primero modelo
+fit1<-ses(traints, h=12)
+summary(fit1)
+
+ffit1<-forecast(fit1, h=12)
+autoplot(fit1) + autolayer(fitted(fit1))
+
+#Segundo Modelo: Tendencia Lineal Holt
+fit2<-holt(traints, h=12)
+summary(fit2)
+
+ffit2<-forecast(fit2, h=12)
+autoplot(fit2) + autolayer(fitted(fit2))
+
+
+#Tercer Modelo: Holt Winters (sin estacioanlidad)
+fit3<-HoltWinters(traints, alpha = NULL, beta = NULL, gamma= FALSE)
+fit3
+ffit3<-forecast(fit3, h=12)
+autoplot(traints) + autolayer(ffit3)
+
+#Cuarto Modelo: Funcion ETS()
+fit4<-ets(train, model="ZZZ", damped = FALSE, alpha = NULL, beta = NULL, 
+          gamma=NULL, phi = NULL, lambda = FALSE, biasadj = FALSE,
+          additive.only = FALSE, restrict = TRUE, allow.multiplicative.trend = FALSE)
+summary(fit4)
+
+ffit4<-forecast(fit4, h=12)
+autoplot(forecast(fit4, h=12), include = 50)
+
+##Métrica desempeño pronóstico##
+RMSEses<-rmse(test, ffit1$mean)
+RMSEholt<-rmse(test, ffit2$mean)
+RMSEhw<-rmse(test,ffit3$mean)
+RMSEets<-rmse(test, ffit4$mean)
+
+MAPEses<-mape(test, ffit1$mean)
+MAPEholt<-mape(test, ffit2$mean)
+MAPEhw<-mape(test, ffit3$mean)
+MAPEets<-mape(test, ffit4$mean)
+
+#Se impreme las resultados obtenidos en la métrica de desempeño
+Modelo<-c("ARIMA(7,1,3)", "AR(3)", "ses", "holt", "Hw", "ets")
+
+RMSE<-c(RMSE_arima, RMSEar1, RMSEses, RMSEholt, RMSEhw, RMSEets)
+
+MAPE<-c(MAPE_arima, MAPE_ar1, MAPEses, MAPEholt, MAPEhw, MAPEets)
+
 res<-data.frame(Modelo,RMSE,MAPE)
 
 print((res))
