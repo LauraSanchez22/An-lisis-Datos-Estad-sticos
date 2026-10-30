@@ -184,3 +184,57 @@ MAPE<-c(MAPE_arima, MAPE_ar1, MAPEses, MAPEholt, MAPEhw, MAPEets)
 res<-data.frame(Modelo,RMSE,MAPE)
 
 print((res))
+
+########RED NEURONAL FORWARD PROPAGATION########
+SPY<-getSymbols("SPY", from="2021-05-01", to="2021-05-31", src="yahoo", auto.assign = FALSE)
+#Eliminacion de datos faltantes
+SPY<-na.omit(SPY)
+#Se mantiene cuarta columna de Precios Cierre
+SPY<-SPY[,4]
+#Graficacion de precios de Spotify
+plot(SPY, ylab="Precios")
+
+#Se toma el 7% de las datos para que sean de prueba
+h<-round(length(SPY)*0.07, digits = 0)
+
+#Datos de entrenamiento y datos de prueba con SPOTIFY
+train<-SPY[1:(nrow(SPY)-h), ]
+test<-SPY[(nrow(SPY)-h+1):nrow(SPY), ]
+
+plot(train, col="pink")
+autoplot(train)
+
+#Se genera la funcion pronostico
+lambda <- BoxCox.lambda(train)
+
+nn1 <- nnetar(
+  BoxCox(train, lambda)
+)
+
+nn1
+
+#Grafica hasta el 12 valor, include se usa para entregar los ultimos 50 datos
+autoplot(forecast(nn1,PI=TRUE, h=12), include=50)
+fnn1<-forecast(nn1,h=12) #NNAR(12,6) 12 observaciones, 6 nodos de la capa oculta
+
+#AR NIVEL
+
+nn2 <- nnetar(train, p = 1,lambda = TRUE)
+summary(nn2)
+
+autoplot(forecast(nn2,PI=TRUE, h=12), include=50)
+fnn2<-forecast(nn2,h=12)
+
+##Calculo de las métricas de error pronostico
+RMSE_nnetar<-rmse(test, fnn1$mean)
+MAPE_nnetar<-mape(test, fnn1$mean)
+RMSE_nnetar2<-rmse(test, fnn2$mean)
+MAPE_nnetar2<-mape(test, fnn2$mean)
+
+#Se imprimen los datos en una tabla
+Modelo<-c("ARIMA(7,1,3)", "AR(3)", "ses", "holt", "HW", "ets", "nnetar_z", "nnetar_ar7")
+RMSE<-c(RMSE_arima, RMSEar1, RMSEses, RMSEholt, RMSEhw,RMSEets, RMSE_nnetar, RMSE_nnetar2)
+MAPE<-c(MAPE_arima, MAPE_ar1, MAPEses, MAPEholt, MAPEhw, MAPEets, MAPE_nnetar, MAPE_nnetar2)
+
+res<-data.frame(Modelo, RMSE, MAPE)
+print((res))
